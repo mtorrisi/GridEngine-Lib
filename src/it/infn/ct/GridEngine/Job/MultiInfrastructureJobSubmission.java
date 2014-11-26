@@ -34,18 +34,19 @@ import javax.naming.NamingException;
 public class MultiInfrastructureJobSubmission {
 
     private List<InfrastructureInfo> lstInfrastructure;
-    private InfrastructureInfo infrastructure;
+    private Wrapper wrapper;
+//    private InfrastructureInfo infrastructure;
     private GEJobDescription description;
     private SubmissionRemote ejbJobSubmission = null;
-
-    private String userEmail = "";
-    private boolean randomCE = false;
-
-    private String DB = "";
-    private String DBUser = "";
-    private String DBUserPwd = "";
-
-    private boolean checkJobsStatus = true;
+//
+//    private String userEmail = "";
+//    private boolean randomCE = false;
+//
+//    private String DB = "";
+//    private String DBUser = "";
+//    private String DBUserPwd = "";
+//
+//    private boolean checkJobsStatus = true;
 
     /**
      * Constructs a {@link MultiInfrastructureJobSubmission} object without
@@ -89,15 +90,15 @@ public class MultiInfrastructureJobSubmission {
      */
     public MultiInfrastructureJobSubmission(String db, String dbUser, String dbUserPwd, GEJobDescription description) throws Exception {
         this(db, dbUser, dbUserPwd);
-        this.description = description;
+        this.wrapper.setJobDescription(description);
     }
 
     private MultiInfrastructureJobSubmission(String db, String dbUser, String dbUserPwd) throws Exception {
         initEJB();
-        this.DB = db;
-        this.DBUser = dbUser;
-        this.DBUserPwd = dbUserPwd;
-        description = new GEJobDescription();
+        this.wrapper = new Wrapper();
+        this.wrapper.setDB(db);
+        this.wrapper.setDBUser(dbUser);
+        this.wrapper.setDbUserPwd(dbUserPwd);
     }
 
     /**
@@ -111,17 +112,19 @@ public class MultiInfrastructureJobSubmission {
      * of the submitting job.
      */
     public MultiInfrastructureJobSubmission(InfrastructureInfo infrastructure, GEJobDescription description) throws Exception {
-        try {
-            ejbJobSubmission = (SubmissionRemote) InitialContext.doLookup("java:global/GridEngine/GridEngine-ejb/Submission");
-        } catch (NamingException ex) {
-            throw new Exception("Grid Engine not available");
-        }
-        if (description == null) {
-            this.description = new GEJobDescription();
-        } else {
-            this.description = description;
-        }
-        this.infrastructure = infrastructure;
+//        try {
+//            ejbJobSubmission = (SubmissionRemote) InitialContext.doLookup("java:global/GridEngine/GridEngine-ejb/Submission");
+//        } catch (NamingException ex) {
+//            throw new Exception("Grid Engine not available");
+//        }
+        initEJB();
+        this.wrapper = new Wrapper();
+        if(description!=null)
+            wrapper.setJobDescription(description);
+        else
+            wrapper.setJobDescription(new GEJobDescription());
+        wrapper.setInfra(infrastructure);
+
     }
 
     public void addInfrastructure(InfrastructureInfo infra) {
@@ -133,8 +136,8 @@ public class MultiInfrastructureJobSubmission {
     }
 
     public InfrastructureInfo getInfrastructure() {
-        if (infrastructure != null) {
-            return infrastructure;
+        if (this.wrapper.getInfra() != null) {
+            return this.wrapper.getInfra();
         } else {
             if (lstInfrastructure != null && !lstInfrastructure.isEmpty()) {
                 return lstInfrastructure.get((int) (Math.random() * lstInfrastructure.size()));
@@ -144,7 +147,7 @@ public class MultiInfrastructureJobSubmission {
     }
 
     public void setInfrastructure(InfrastructureInfo infrastructure) {
-        this.infrastructure = infrastructure;
+        this.wrapper.setInfra(infrastructure);
     }
 
     /**
@@ -155,7 +158,7 @@ public class MultiInfrastructureJobSubmission {
      * thread.
      */
     public void setCheckJobsStatus(boolean value) {
-        checkJobsStatus = value;
+        this.wrapper.setCheckJobStatus(value);
     }
 
     /**
@@ -166,7 +169,7 @@ public class MultiInfrastructureJobSubmission {
      * submission, false otherwise.
      */
     public boolean getCheckJobsStatus() {
-        return checkJobsStatus;
+        return this.wrapper.isCheckJobStatus();
     }
 
     /**
@@ -177,7 +180,7 @@ public class MultiInfrastructureJobSubmission {
      * default it is false.
      */
     public void setRandomCE(boolean value) {
-        this.randomCE = value;
+        this.wrapper.setRandomCE(value);
     }
 
     /**
@@ -188,15 +191,15 @@ public class MultiInfrastructureJobSubmission {
      * bdii service, false otherwise
      */
     public boolean getRandomCE() {
-        return randomCE;
+        return this.wrapper.isRandomCE();
     }
 
     public GEJobDescription getDescription() {
-        return description;
+        return this.wrapper.getJobDescription();
     }
 
     public void setDescription(GEJobDescription description) {
-        this.description = description;
+        this.wrapper.setJobDescription(description);
     }
 
     /**
@@ -205,7 +208,7 @@ public class MultiInfrastructureJobSubmission {
      * @param executable a string that represents the executable file name.
      */
     public void setExecutable(String executable) {
-        this.description.setExecutable(executable);
+        this.wrapper.getJobDescription().setExecutable(executable);
     }
 
     /**
@@ -215,7 +218,7 @@ public class MultiInfrastructureJobSubmission {
      * arguments.
      */
     public void setArguments(String arguments) {
-        this.description.setArguments(arguments);
+        this.wrapper.getJobDescription().setArguments(arguments);
     }
 
     /**
@@ -225,7 +228,7 @@ public class MultiInfrastructureJobSubmission {
      */
     public void setJobQueue(String value) {
 //		jobQueue = value;
-        this.description.setQueue(value);
+        this.wrapper.getJobDescription().setQueue(value);
     }
 
     /**
@@ -235,7 +238,7 @@ public class MultiInfrastructureJobSubmission {
      */
     public String getJobQueue() {
 //		return jobQueue;
-        return description.getQueue();
+        return this.wrapper.getJobDescription().getQueue();
     }
 
     /**
@@ -244,7 +247,7 @@ public class MultiInfrastructureJobSubmission {
      * @return the grid job identifier.
      */
     public String getjobId() {
-        return this.description.getjobId();
+        return this.wrapper.getJobDescription().getjobId();
     }
 
     /**
@@ -254,7 +257,7 @@ public class MultiInfrastructureJobSubmission {
      * specified by this description.
      */
     public void setjobId(String activeJobId) {
-        this.description.setjobId(activeJobId);
+        this.wrapper.getJobDescription().setjobId(activeJobId);
     }
 
     /**
@@ -263,7 +266,7 @@ public class MultiInfrastructureJobSubmission {
      * @param output the output file name.
      */
     public void setOutput(String output) {
-        this.description.setOutput(output);
+        this.wrapper.getJobDescription().setOutput(output);
     }
 
     /**
@@ -272,7 +275,7 @@ public class MultiInfrastructureJobSubmission {
      * @param error the error file name.
      */
     public void setError(String error) {
-        this.description.setError(error);
+        this.wrapper.getJobDescription().setError(error);
     }
 
     /**
@@ -281,11 +284,11 @@ public class MultiInfrastructureJobSubmission {
      * @param queue Queue name.
      */
     public void setQueue(String queue) {
-        this.description.setQueue(queue);
+        this.wrapper.getJobDescription().setQueue(queue);
     }
 
     public void setFileTransfer(String fileTransfer) {
-        this.description.setFileTransfer(fileTransfer);
+        this.wrapper.getJobDescription().setFileTransfer(fileTransfer);
     }
 
     /**
@@ -295,11 +298,11 @@ public class MultiInfrastructureJobSubmission {
      * @param totalCPUCount total number of CPUs required to execute the job.
      */
     public void setTotalCPUCount(String totalCPUCount) {
-        this.description.setTotalCPUCount(totalCPUCount);
+        this.wrapper.getJobDescription().setTotalCPUCount(totalCPUCount);
     }
 
     public void setSPDMVariation(String sPDMVariation) {
-        this.description.setSPDMVariation(sPDMVariation);
+        this.wrapper.getJobDescription().setSPDMVariation(sPDMVariation);
     }
 
     /**
@@ -309,7 +312,7 @@ public class MultiInfrastructureJobSubmission {
      * @param numberOfProcess total number of processes required by the job.
      */
     public void setNumberOfProcesses(String numberOfProcess) {
-        this.description.setNumberOfProcesses(numberOfProcess);
+        this.wrapper.getJobDescription().setNumberOfProcesses(numberOfProcess);
     }
 
     public void setJDLRequirements(String[] jDLRequirements) {
@@ -320,12 +323,12 @@ public class MultiInfrastructureJobSubmission {
             }
             s += jDLRequirements[i];
         }
-        this.description.setJDLRequirements(s);
+        this.wrapper.getJobDescription().setJDLRequirements(s);
     }
 
     public void setSPMDVariation(String value) {
 //		SPMDVariation = value;
-        this.description.setSPDMVariation(value);
+        this.wrapper.getJobDescription().setSPDMVariation(value);
     }
 
     /**
@@ -338,7 +341,7 @@ public class MultiInfrastructureJobSubmission {
      * folder where output files are located..
      */
     public void setOutputPath(String outputPath) {
-        this.description.setOutputPath(outputPath);
+        this.wrapper.getJobDescription().setOutputPath(outputPath);
     }
 
     /**
@@ -348,7 +351,7 @@ public class MultiInfrastructureJobSubmission {
      */
     public void setJobOutput(String value) {
 //		jobOutput = value;
-        this.description.setOutput(value);
+        this.wrapper.getJobDescription().setOutput(value);
     }
 
     /**
@@ -358,7 +361,7 @@ public class MultiInfrastructureJobSubmission {
      */
     public void setJobError(String value) {
 //		jobError = value;
-        this.description.setError(value);
+        this.wrapper.getJobDescription().setError(value);
     }
 
     /**
@@ -368,11 +371,11 @@ public class MultiInfrastructureJobSubmission {
      * list.
      */
     public void setInputFiles(String inputFiles) {
-        this.description.setInputFiles(inputFiles);
+        this.wrapper.getJobDescription().setInputFiles(inputFiles);
     }
 
     public void setOutputFiles(String value) {
-        this.description.setOutputFiles(value);
+        this.wrapper.getJobDescription().setOutputFiles(value);
 
     }
 
@@ -382,7 +385,7 @@ public class MultiInfrastructureJobSubmission {
      * @param proxyRenewal true if the robot proxy is renewable false otherwise
      */
     public void setProxyRenewal(boolean proxyRenewal) {
-        this.description.setProxyRenewal(proxyRenewal);
+        this.wrapper.getJobDescription().setProxyRenewal(proxyRenewal);
     }
 
     /**
@@ -392,7 +395,7 @@ public class MultiInfrastructureJobSubmission {
      * @param resubmitCount the remaining re-submission attempts.
      */
     public void setResubmitCount(int resubmitCount) {
-        this.description.setResubmitCount(resubmitCount);
+        this.wrapper.getJobDescription().setResubmitCount(resubmitCount);
     }
 
     /**
@@ -402,7 +405,7 @@ public class MultiInfrastructureJobSubmission {
      * completed.
      */
     public void setUserEmail(String userEmail) {
-        this.userEmail = userEmail;
+        this.wrapper.setUserEmail(userEmail);
     }
 
 //    public String submitJob(String commonName, String tcpAddress, int GridInteractionId, String userDescription) {
@@ -420,7 +423,8 @@ public class MultiInfrastructureJobSubmission {
      * @param userDescription a description for this job.
      */
     public void submitJobAsync(String commonName, String tcpAddress, int GridInteractionId, String userDescription) {
-        ejbJobSubmission.submitJobASync(getInfrastructure(), description, commonName, tcpAddress, GridInteractionId, userDescription, this.userEmail, this.DB, this.DBUser, this.DBUserPwd, this.randomCE, this.checkJobsStatus);
+//        ejbJobSubmission.submitJobASync(getInfrastructure(), description, commonName, tcpAddress, GridInteractionId, userDescription, this.userEmail, this.DB, this.DBUser, this.DBUserPwd, this.randomCE, this.checkJobsStatus);
+        submitJobAsync(getInfrastructure(), commonName, tcpAddress, GridInteractionId, userDescription);
     }
 
     /**
@@ -436,7 +440,13 @@ public class MultiInfrastructureJobSubmission {
      * @param userDescription a description for this job.
      */
     public void submitJobAsync(InfrastructureInfo infrastructure, String commonName, String tcpAddress, int GridInteractionId, String userDescription) {
-        ejbJobSubmission.submitJobASync(infrastructure, description, commonName, tcpAddress, GridInteractionId, userDescription, this.userEmail, this.DB, this.DBUser, this.DBUserPwd, this.randomCE, this.checkJobsStatus);
+//        ejbJobSubmission.submitJobASync(infrastructure, description, commonName, tcpAddress, GridInteractionId, userDescription, this.userEmail, this.DB, this.DBUser, this.DBUserPwd, this.randomCE, this.checkJobsStatus);
+        this.wrapper.setInfra(infrastructure);
+        this.wrapper.setCommonName(commonName);
+        this.wrapper.setTcpAddress(tcpAddress);
+        this.wrapper.setInteractionId(GridInteractionId);
+        this.wrapper.setUserDescription(userDescription);
+        ejbJobSubmission.submitJobASync(wrapper);
     }
 
     private void initEJB() throws Exception {
